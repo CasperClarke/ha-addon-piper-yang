@@ -5,12 +5,7 @@ permissions:
   packages: write
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'piper-yang/**'
-      - '.github/workflows/build.yaml'
-  workflow_dispatch:
+  workflow_dispatch:  # Manual only - use build-and-push.sh for local builds
 
 jobs:
   build:

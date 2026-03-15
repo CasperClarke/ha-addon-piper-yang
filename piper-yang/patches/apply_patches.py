@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Apply sentence-silence patches to wyoming-piper and piper-tts."""
+import re
 import site
 from pathlib import Path
 
@@ -26,17 +27,67 @@ if "--sentence-silence" not in text:
 else:
     print("wyoming_piper/__main__.py already patched")
 
-# 2. wyoming_piper/handler.py - pass sentence_silence to syn_config
+# 2. wyoming_piper/handler.py - pass sentence_silence to syn_config AND add silence between sentences
 handler_py = SITE / "wyoming_piper" / "handler.py"
 text = handler_py.read_text()
+
+# 2a. Pass sentence_silence to syn_config
 if "syn_config.sentence_silence" not in text:
     marker = "syn_config.noise_w_scale = self.cli_args.noise_w_scale\n\n        wav_writer"
     insert = "syn_config.noise_w_scale = self.cli_args.noise_w_scale\n\n        if getattr(self.cli_args, \"sentence_silence\", 0) > 0:\n            syn_config.sentence_silence = self.cli_args.sentence_silence\n\n        wav_writer"
     text = text.replace(marker, insert)
-    handler_py.write_text(text)
-    print("Patched wyoming_piper/handler.py")
+    print("Patched wyoming_piper/handler.py (syn_config)")
+
+    # 2b. Add add_silence_after param to _handle_synthesize
+if "add_silence_after" not in text:
+    text = text.replace(
+        "send_start: bool = True, send_stop: bool = True\n    ) -> bool:",
+        "send_start: bool = True, send_stop: bool = True, add_silence_after: bool = False\n    ) -> bool:",
+    )
+    # 2c. Add silence chunks after the audio loop, before "if send_stop"
+    silence_block = '''
+        # Inject silence between sentences (handler-level; each sentence = separate _handle_synthesize)
+        if add_silence_after:
+            silence_sec = getattr(self.cli_args, "sentence_silence", 0) or 0
+            _LOGGER.debug("Piper Yang: add_silence_after=True, sentence_silence=%.2f", silence_sec)
+        if add_silence_after and getattr(self.cli_args, "sentence_silence", 0) > 0:
+            silence_sec = self.cli_args.sentence_silence
+            total_silence_bytes = int(silence_sec * rate) * channels * width
+            chunk_size = bytes_per_sample * self.cli_args.samples_per_chunk
+            num_silence_chunks = max(1, (total_silence_bytes + chunk_size - 1) // chunk_size)
+            silence_chunk = b"\\x00\\x00" * (self.cli_args.samples_per_chunk * channels)
+            for _ in range(num_silence_chunks):
+                await self.write_event(
+                    AudioChunk(audio=silence_chunk, rate=rate, width=width, channels=channels).event(),
+                )
+
+'''
+    # Match "if send_stop:" with possible whitespace variations (use lambda to avoid re parsing \x in replacement)
+    pattern = r"(\n\s+if send_stop:\s*\n\s+await self\.write_event\(AudioStop\(\)\.event\(\)\))"
+    if re.search(pattern, text):
+        text = re.sub(pattern, lambda m: silence_block + m.group(1), text, count=1)
+    else:
+        # Fallback: insert before "if send_stop"
+        text = text.replace(
+            "\n        if send_stop:\n            await self.write_event(AudioStop().event())",
+            silence_block + "\n        if send_stop:\n            await self.write_event(AudioStop().event())",
+        )
+    # 2d. Call site: pass add_silence_after=True for non-final sentences (for loop)
+    text = text.replace(
+        "send_start=(i == 0), send_stop=False\n        )",
+        "send_start=(i == 0), send_stop=False, add_silence_after=True\n        )",
+    )
+    # 2e. Streaming: pass add_silence_after=True (adds silence between streamed sentences)
+    text = text.replace(
+        "await self._handle_synthesize(self._synthesize)",
+        "await self._handle_synthesize(self._synthesize, add_silence_after=True)",
+        1,  # Only first occurrence (SynthesizeChunk loop)
+    )
+    print("Patched wyoming_piper/handler.py (add_silence_after)")
 else:
-    print("wyoming_piper/handler.py already patched")
+    print("wyoming_piper/handler.py (add_silence_after) already patched")
+
+handler_py.write_text(text)
 
 # 3. piper/config.py - add sentence_silence to SynthesisConfig
 config_py = SITE / "piper" / "config.py"

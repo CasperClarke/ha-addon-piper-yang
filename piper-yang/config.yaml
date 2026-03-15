@@ -1,7 +1,7 @@
 ---
 name: Piper Yang
 description: Piper TTS with 0.2s sentence spacing (Yang voice optimized)
-version: 2.2.2.1
+version: 2.2.2.5
 slug: piper_yang
 url: https://github.com/CasperClarke/ha-addon-piper-yang
 arch:
