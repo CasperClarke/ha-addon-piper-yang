@@ -3,7 +3,7 @@ name: Piper Yang
 description: Piper TTS with 0.2s sentence spacing (Yang voice optimized)
 version: 2.2.2.1
 slug: piper_yang
-url: https://github.com/YOUR_USERNAME/ha-addon-piper-yang
+url: https://github.com/CasperClarke/ha-addon-piper-yang
 arch:
   - amd64
   - aarch64
@@ -35,4 +35,4 @@ schema:
 ports:
   "10200/tcp": null
 homeassistant: 2023.8.0.dev20230718
-image: homeassistant/{arch}-addon-piper-yang
+image: ghcr.io/casperclarke/{arch}-addon-piper-yang

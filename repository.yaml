@@ -1,5 +1,5 @@
 # Piper Yang - Custom add-on with sentence silence
 # https://developers.home-assistant.io/docs/add-ons/repository
 name: Piper Yang
-url: https://github.com/YOUR_USERNAME/ha-addon-piper-yang
+url: https://github.com/CasperClarke/ha-addon-piper-yang
 maintainer: Your Name <your@email.com>
