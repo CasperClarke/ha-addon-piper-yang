@@ -1,0 +1,4 @@
+#!/command/with-contenv bashio
+# vim: ft=bash
+# shellcheck shell=bash
+exec s6-svscan /var/run/s6/services
