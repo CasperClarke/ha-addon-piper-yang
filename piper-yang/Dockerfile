@@ -33,6 +33,20 @@ RUN python3 /tmp/apply_patches.py && rm /tmp/apply_patches.py
 WORKDIR /
 COPY rootfs /
 
+# Ensure s6 scripts are executable (required by s6-overlay v3)
+RUN chmod +x \
+    /etc/s6-overlay/s6-rc.d/discovery/run \
+    /etc/s6-overlay/s6-rc.d/discovery/up \
+    /etc/s6-overlay/s6-rc.d/piper/run \
+    /etc/s6-overlay/s6-rc.d/piper/finish \
+    /etc/s6-overlay/s6-rc.d/user/run
+RUN chmod +x \
+    /etc/s6-overlay/s6-rc.d/discovery/run \
+    /etc/s6-overlay/s6-rc.d/discovery/up \
+    /etc/s6-overlay/s6-rc.d/piper/run \
+    /etc/s6-overlay/s6-rc.d/piper/finish \
+    /etc/s6-overlay/s6-rc.d/user/run
+
 HEALTHCHECK --start-period=10m \
   CMD echo '{ "type": "describe" }' \
     | nc -w 1 localhost 10200 \
