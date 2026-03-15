@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local test data (run-locally.sh uses mktemp, but just in case)
+.piper-yang-data/

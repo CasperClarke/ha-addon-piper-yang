@@ -34,18 +34,11 @@ WORKDIR /
 COPY rootfs /
 
 # Ensure s6 scripts are executable (required by s6-overlay v3)
+# Note: discovery/up is a path file, not a script - do not chmod it
 RUN chmod +x \
     /etc/s6-overlay/s6-rc.d/discovery/run \
-    /etc/s6-overlay/s6-rc.d/discovery/up \
     /etc/s6-overlay/s6-rc.d/piper/run \
-    /etc/s6-overlay/s6-rc.d/piper/finish \
-    /etc/s6-overlay/s6-rc.d/user/run
-RUN chmod +x \
-    /etc/s6-overlay/s6-rc.d/discovery/run \
-    /etc/s6-overlay/s6-rc.d/discovery/up \
-    /etc/s6-overlay/s6-rc.d/piper/run \
-    /etc/s6-overlay/s6-rc.d/piper/finish \
-    /etc/s6-overlay/s6-rc.d/user/run
+    /etc/s6-overlay/s6-rc.d/piper/finish
 
 HEALTHCHECK --start-period=10m \
   CMD echo '{ "type": "describe" }' \

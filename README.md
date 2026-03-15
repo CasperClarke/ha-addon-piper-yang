@@ -13,38 +13,10 @@ Optimized for the **en_US-yang-medium** voice (default), but works with any Pipe
 
 ## Installation
 
-### Option A: Local add-on (no GitHub)
-
-1. Enable **Samba** or **Terminal & SSH** add-on so you can access the config.
-
-2. Copy the `ha-addon-piper-yang` folder so your config looks like:
-   ```
-   config/
-     addons/
-       ha-addon-piper-yang/
-         repository.yaml
-         piper-yang/
-           config.yaml
-           Dockerfile
-           ...
-   ```
-
-3. Add as a **local add-on repository**:
-   - **Settings** → **Add-ons** → **Add-on store** → **⋮** → **Repositories**
-   - Add: `file:///config/addons/ha-addon-piper-yang`
-   - (Or use the path where `repository.yaml` lives.)
-
-4. Refresh; **Piper Yang** should appear. Install and start it.
-
-### Option B: GitHub repository
-
-1. Fork this repo or push it to your GitHub.
-2. Add the repo URL in **Settings** → **Add-ons** → **Repositories**:
-   ```
-   https://github.com/YOUR_USERNAME/ha-addon-piper-yang
-   ```
-3. Update `repository.yaml` with your repo URL.
-4. Install **Piper Yang** from the Add-on store.
+1. In Home Assistant: **Settings** → **Add-ons** → **Add-on store** → **⋮** (top right) → **Repositories**
+2. Add: `https://github.com/CasperClarke/ha-addon-piper-yang`
+3. Click **Refresh**, then find **Piper Yang** in the Add-on store
+4. Install and start it
 
 ## Configuration
 
@@ -75,18 +47,33 @@ Use **File editor**, **Samba**, or `scp`. The voice will be discovered automatic
 3. Use the same port (10200) and Zeroconf name. Home Assistant will discover it automatically.
 4. If needed, restart the Voice Assistant or reconfigure the TTS integration.
 
-## Building locally
+## Building
 
-From the `ha-addon-piper-yang` directory:
+### GitHub Actions (automatic)
+
+Pushes to `main` trigger a build. Images are pushed to `ghcr.io/casperclarke/{arch}-addon-piper-yang`.
+
+### Local build and push
+
+For faster testing without waiting for CI:
 
 ```bash
-# With Home Assistant CLI (if available)
-ha addons build piper-yang --arch aarch64
+# 1. Log in to ghcr.io (GitHub PAT with write:packages)
+docker login ghcr.io
 
-# Or with Docker
-docker run --rm -v $(pwd):/build -w /build/piper-yang \
-  ghcr.io/home-assistant/aarch64-base-debian:bookworm \
-  /bin/bash -c "pip install wyoming-piper... && ..."
+# 2. Build and push aarch64 (for Raspberry Pi)
+./build-and-push.sh           # version from config.yaml
+./build-and-push.sh 2.2.2.2   # custom version
 ```
 
-For production, use the [Home Assistant Add-on Builder](https://github.com/home-assistant/addons-developer-documentation) or push to GitHub and let the HA build system build it.
+Requires: `docker-buildx-plugin` and optionally QEMU for cross-platform builds.
+
+### Local run (no push)
+
+Test the container locally before pushing:
+
+```bash
+./run-locally.sh
+```
+
+Builds for amd64, runs with mock config. Piper listens on port 10200. Stop with `docker stop piper-yang-local` from another terminal.
