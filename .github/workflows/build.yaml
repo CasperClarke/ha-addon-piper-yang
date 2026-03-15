@@ -40,6 +40,10 @@ jobs:
           VERSION=$(grep '^version:' piper-yang/config.yaml | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Set registry owner (lowercase)
+        run: |
+          echo "REGISTRY_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -52,5 +56,5 @@ jobs:
             WYOMING_PIPER_VERSION=2.2.2
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-addon-piper-yang:${{ steps.version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-addon-piper-yang:latest
+            ghcr.io/${{ env.REGISTRY_OWNER }}/${{ matrix.arch }}-addon-piper-yang:${{ steps.version.outputs.version }}
+            ghcr.io/${{ env.REGISTRY_OWNER }}/${{ matrix.arch }}-addon-piper-yang:latest
